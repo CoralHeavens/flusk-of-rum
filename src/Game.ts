@@ -6,11 +6,12 @@ export class Game {
   private slotMachine!: SlotMachine;
   private betOptions: number[] = [0.5, 1, 2, 5, 10, 20];
   private autoMode: boolean = false;
+  private running: boolean = false;
 
   // Settings
   private credit: number = 2000;
   private bet: number = 10;
-  private autoTimeout: number = 5000;
+  private autoTimeout: number = 4000;
 
   constructor(containerId: string) {
     const container = document.getElementById(containerId);
@@ -52,7 +53,10 @@ export class Game {
           betValueSpan.innerText = this.bet.toString();
         });
 
-        spinButton.addEventListener("click", () => this.startSpin());
+        spinButton.addEventListener("click", () => {
+          if (this.running) return;
+          this.startSpin();
+        });
       }
 
       if (autoButton) {
@@ -63,6 +67,9 @@ export class Game {
             this.autoMode = false;
             return;
           }
+
+          if (this.running && !this.autoMode) return;
+
           this.autoMode = true;
 
           const autoSpin = () => {
@@ -103,6 +110,8 @@ export class Game {
       return;
     }
 
+    this.running = true;
+
     audioManager.playSound("click");
     audioManager.playSound("spin");
 
@@ -117,12 +126,17 @@ export class Game {
 
     audioManager.stopSound("spin");
 
+    if (!this.autoMode) {
+      this.running = false;
+    }
+
     if (winAmount <= 0) return;
     
     audioManager.playSound("win");
 
     if (this.autoMode) {
       this.autoMode = false;
+      this.running = false;
       alert("You won! Auto-spin stopped.");
     }
   }
